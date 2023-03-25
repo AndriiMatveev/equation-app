@@ -2,6 +2,7 @@ package equation.app.service.lex.analytic;
 
 import equation.app.exception.WrongEquationException;
 import equation.app.model.lexeme.Lexeme;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -66,7 +67,7 @@ public class LexAnalyticImpl implements LexAnalytic {
         return lexemes;
     }
 
-    public List<Lexeme> replaceDigitInsteadX(List<Lexeme> lexemes, double x)
+    public List<Lexeme> replaceDigitInsteadX(List<Lexeme> lexemes, BigDecimal x)
             throws WrongEquationException {
         for (Lexeme lexeme : lexemes) {
             String value = lexeme.getValue();
@@ -75,13 +76,13 @@ public class LexAnalyticImpl implements LexAnalytic {
                         || !value.endsWith("x")) {
                     throw new WrongEquationException("Equation isn't correct. Please, check it.");
                 }
-                if (value.equals("x") || value.equals("-x")) {
-                    lexeme.setValue(value.replace("x", Double.toString(x)));
+                if (value.equals("x")) {
+                    lexeme.setValue(value.replace("x", x.toString()));
                     continue;
                 }
-                double temp = Double.parseDouble(value.replace("x", ""));
-                temp *= x;
-                lexeme.setValue(Double.toString(temp));
+                BigDecimal temp = new BigDecimal(value.replace("x", ""));
+                temp = temp.multiply(x);
+                lexeme.setValue(temp.toString());
             }
         }
         return lexemes;
