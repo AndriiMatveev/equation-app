@@ -3,6 +3,7 @@ package equation.app.service.syntsyntax.analytic;
 import equation.app.exception.WrongEquationException;
 import equation.app.model.lexeme.Lexeme;
 import equation.app.service.lex.analytic.LexemeBuffer;
+import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,26 +14,20 @@ public class SyntaxAnalyticImpl {
         this.buffer = buffer;
     }
 
-    public double expr(LexemeBuffer buffer) throws WrongEquationException {
-        Lexeme lexeme = buffer.next();
-        if (lexeme.getType() == Lexeme.LexemeType.EOF) {
-            return 0;
-        } else {
-            buffer.back();
-            return plusminus(buffer);
-        }
+    public BigDecimal expr(LexemeBuffer buffer) throws WrongEquationException {
+        return plusminus(buffer);
     }
 
-    private double plusminus(LexemeBuffer buffer) throws WrongEquationException {
-        double value = multdiv(buffer);
+    private BigDecimal plusminus(LexemeBuffer buffer) throws WrongEquationException {
+        BigDecimal value = multdiv(buffer);
         while (true) {
             Lexeme lexeme = buffer.next();
             switch (lexeme.getType()) {
                 case OP_PLUS:
-                    value += multdiv(buffer);
+                    value = value.add(multdiv(buffer));
                     break;
                 case OP_MINUS:
-                    value -= multdiv(buffer);
+                    value = value.subtract(multdiv(buffer));
                     break;
                 case EOF:
                 case RIGHT_BRACKET:
@@ -45,16 +40,16 @@ public class SyntaxAnalyticImpl {
         }
     }
 
-    private double multdiv(LexemeBuffer buffer) throws WrongEquationException {
-        double value = factor(buffer);
+    private BigDecimal multdiv(LexemeBuffer buffer) throws WrongEquationException {
+        BigDecimal value = factor(buffer);
         while (true) {
             Lexeme lexeme = buffer.next();
             switch (lexeme.getType()) {
                 case OP_MUL:
-                    value *= factor(buffer);
+                    value = value.multiply(factor(buffer));
                     break;
                 case OP_DIV:
-                    value /= factor(buffer);
+                    value = value.divide(factor(buffer));
                     break;
                 case EOF:
                 case RIGHT_BRACKET:
@@ -63,20 +58,21 @@ public class SyntaxAnalyticImpl {
                     buffer.back();
                     return value;
                 default:
-                    throw new WrongEquationException("Unexpected token: " + lexeme.getValue()
+                    throw new WrongEquationException("Unexpected character: "
+                            + lexeme.getValue()
                             + " at position: " + buffer.getPosition());
             }
         }
     }
 
-    private double factor(LexemeBuffer buffer) throws WrongEquationException {
+    private BigDecimal factor(LexemeBuffer buffer) throws WrongEquationException {
         Lexeme lexeme = buffer.next();
         switch (lexeme.getType()) {
             case OP_MINUS:
-                double value = factor(buffer);
-                return -value;
+                BigDecimal value = factor(buffer);
+                return value.negate();
             case NUMBER:
-                return Double.parseDouble(lexeme.getValue());
+                return new BigDecimal(lexeme.getValue());
             case LEFT_BRACKET:
                 value = expr(buffer);
                 lexeme = buffer.next();

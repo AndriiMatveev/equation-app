@@ -10,6 +10,7 @@ import equation.app.service.lex.analytic.LexAnalytic;
 import equation.app.service.lex.analytic.LexemeBuffer;
 import equation.app.service.syntsyntax.analytic.SyntaxAnalyticImpl;
 import equation.app.service.test.EquationTest;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -48,9 +49,9 @@ public class EquationServiceImpl implements EquationService {
             return;
         }
         System.out.println("Type the answer below" + System.lineSeparator());
-        double answer;
+        BigDecimal answer;
         try {
-            answer = scanner.nextDouble();
+            answer = BigDecimal.valueOf(scanner.nextDouble());
         } catch (Exception e) {
             System.out.println("Answer entered incorrectly.");
             return;
@@ -63,11 +64,11 @@ public class EquationServiceImpl implements EquationService {
             lexemeBuffer.setLexemes(leftPartLexemes);
             List<Lexeme> rightPartLexemes = lexAnalytic.lexAnalyze(partsOfEquation[1]);
             rightPartLexemes = lexAnalytic.replaceDigitInsteadX(rightPartLexemes, answer);
-            double leftAnswer = syntaxAnalytic.expr(lexemeBuffer);
+            BigDecimal leftAnswer = syntaxAnalytic.expr(lexemeBuffer);
             lexemeBuffer.setPosition(0);
             lexemeBuffer.setLexemes(rightPartLexemes);
-            double rightAnswer = syntaxAnalytic.expr(lexemeBuffer);
-            if (leftAnswer != rightAnswer) {
+            BigDecimal rightAnswer = syntaxAnalytic.expr(lexemeBuffer);
+            if (leftAnswer.compareTo(rightAnswer) != 0) {
                 System.out.println("Answer is incorrect." + answer);
                 return;
             }
@@ -92,5 +93,10 @@ public class EquationServiceImpl implements EquationService {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    @Override
+    public List<Equation> findAllWithOneAnswer() {
+        return equationRepository.findEquationWithOneAnswer();
     }
 }
